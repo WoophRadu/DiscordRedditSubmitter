@@ -48,7 +48,7 @@ logging.Logger.setLevel(logging.getLogger(),loglevel)
 if not (redditUser == "YourUsername" or redditPassword == "YourPassword" or redditID == "YourID" or redditSecret == "YourSecret" or redditSub == "example"):
     reddit = praw.Reddit(client_id=redditID,client_secret=redditSecret,password=redditPassword,username=redditUser,user_agent='AliveMemes Discord Python Bot (by u/WoophRadu)')
     subreddit = reddit.subreddit(redditSub)
-    logger.log("Logged into reddit as /u/" + redditUser +" , and bound to subreddit /r/" + redditSub)
+    logger.log("Logged into reddit as /u/" + redditUser +" and bound to subreddit /r/" + redditSub)
 else:
     logger.log("Some settings are default in config.ini , you need to change them in order to get the all the functionality working. Exiting in 5 seconds.", "critical")
     time.sleep(5)
@@ -63,15 +63,20 @@ async def on_ready():
     logger.log("Bot initialized. Logging in...")
     logger.log('Logged in as ' + bot.user.name + ' with ID [' + bot.user.id + '] on:')
     for sv in bot.servers:
-        logger.log('\t[' + str(sv.id) + '] ' + str(sv.name))
-        logger.log('\n')
+        logger.log('\t[' + str(sv.id) + '] ' + str(sv.name) + ", bound to channels:")
+        for chid in channelsToWatch:
+            ch = bot.get_channel(chid)
+            if ch in sv.channels:
+                logger.log("\t\t[" + chid + "] #" + ch.name)
+
 
 @bot.event
 async def on_message(message):
-    if message.content != "" and len(message.attachments) == 0 and message.channel.id in channelsToWatch:
+    if message.author.id != bot.user.id and message.content != "" and len(message.attachments) == 0 and message.channel.id in channelsToWatch:
+
         subreddit.submit(title=message.content,selftext="This message has been automatically submitted.")
         logger.log("Submitted reddit self-post on /r/" + redditSub +": \"" + message.content + "\"")
-    elif message.content == "" and len(message.attachments) == 1 and message.channel.id in channelsToWatch:
+    elif message.author.id != bot.user.id and message.content == "" and len(message.attachments) > 0 and message.channel.id in channelsToWatch:
         subreddit.submit(title=message.author.name + " at " + time.strftime('%H:%M %d %b'),url=message.attachments[0]["url"])
         logger.log("Submitted reddit link-post on /r/" + redditSub + ": \"" + message.author.name + " at " + time.strftime('%H:%M %d %b') + "\", " + message.attachments[0]["url"])
 
