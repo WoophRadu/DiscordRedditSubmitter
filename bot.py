@@ -38,13 +38,14 @@ try:
     redditID = config["RedditLogin"]["client_id"]
     redditSecret = config["RedditLogin"]["client_secret"]
     redditSub = config["AutoSubmit"]["subreddit"]
-    channelToWatch = config["AutoSubmit"]["channel_id"]
+    channelsToWatch = config["AutoSubmit"]["channel_ids"].split()
+    botCommandPrefix = config["Options"]["command_prefix"]
 except:
     logger.log("Something wrong with the config. If you crash, delete it so we can regenerate it.", "error")
 
 logging.Logger.setLevel(logging.getLogger(),loglevel)
 
-if not (redditUser == "YourUsername" or redditPassword == "YourPassword" or redditID == "YourID" or redditSecret == "YourSecret"):
+if not (redditUser == "YourUsername" or redditPassword == "YourPassword" or redditID == "YourID" or redditSecret == "YourSecret" or redditSub == "example"):
     reddit = praw.Reddit(client_id=redditID,client_secret=redditSecret,password=redditPassword,username=redditUser,user_agent='AliveMemes Discord Python Bot (by u/WoophRadu)')
     subreddit = reddit.subreddit(redditSub)
     logger.log("Logged into reddit as /u/" + redditUser +" , and bound to subreddit /r/" + redditSub)
@@ -53,8 +54,8 @@ else:
     time.sleep(5)
     sys.exit(1)
 
-description = '''This bot does nothing.'''
-bot = commands.Bot(command_prefix='!', description=description)
+description = '''A Discord bot that you can configure to automatically submit posts to reddit.'''
+bot = commands.Bot(command_prefix=botCommandPrefix, description=description)
 
 @bot.event
 async def on_ready():
@@ -67,10 +68,10 @@ async def on_ready():
 
 @bot.event
 async def on_message(message):
-    if message.content != "" and len(message.attachments) == 0 and message.channel.id == channelToWatch:
+    if message.content != "" and len(message.attachments) == 0 and message.channel.id in channelsToWatch:
         subreddit.submit(title=message.content,selftext="This message has been automatically submitted.")
         logger.log("Submitted reddit self-post on /r/" + redditSub +": \"" + message.content + "\"")
-    elif message.content == "" and len(message.attachments) == 1 and message.channel.id == channelToWatch:
+    elif message.content == "" and len(message.attachments) == 1 and message.channel.id in channelsToWatch:
         subreddit.submit(title=message.author.name + " at " + time.strftime('%H:%M %d %b'),url=message.attachments[0]["url"])
         logger.log("Submitted reddit link-post on /r/" + redditSub + ": \"" + message.author.name + " at " + time.strftime('%H:%M %d %b') + "\", " + message.attachments[0]["url"])
 
