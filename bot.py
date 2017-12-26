@@ -50,7 +50,7 @@ except:
 logging.Logger.setLevel(logging.getLogger(),loglevel)
 
 if not (redditUser == "YourUsername" or redditPassword == "YourPassword" or redditID == "YourID" or redditSecret == "YourSecret" or redditSub == "example"):
-    reddit = praw.Reddit(client_id=redditID,client_secret=redditSecret,password=redditPassword,username=redditUser,user_agent='AliveMemes Discord Python Bot (by u/WoophRadu)')
+    reddit = praw.Reddit(client_id=redditID,client_secret=redditSecret,password=redditPassword,username=redditUser,user_agent='DiscordRedditSubmitter (coded by u/WoophRadu, src at github.com/WoophRadu/DiscordRedditSubmitter)')
     subreddit = reddit.subreddit(redditSub)
     logger.log("Logged into reddit as /u/" + redditUser +" and bound to subreddit /r/" + redditSub)
 else:
@@ -125,5 +125,3 @@ else:
         logger.log("There was an error while connecting the bot to Discord.\nEither your login token is invalid, or idk. Exiting in 5 seconds.", "critical")
         time.sleep(5)
         sys.exit(1)
-
-
