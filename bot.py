@@ -10,6 +10,7 @@ import os.path
 from shutil import copyfile
 import time
 import praw
+import secrets
 
 if sys.platform == "win32":
     sys.stdout = codecs.getwriter('utf8')(sys.stdout.buffer)
@@ -39,6 +40,9 @@ try:
     redditSecret = config["RedditLogin"]["client_secret"]
     redditSub = config["AutoSubmit"]["subreddit"]
     channelsToWatch = config["AutoSubmit"]["channel_ids"].split()
+    promote = config["AutoSubmit"]["promote"]
+    detailedSrc = config["AutoSubmit"]["detailed_src"]
+    tagTitles = config["AutoSubmit"]["unique_titles"]
     botCommandPrefix = config["Options"]["command_prefix"]
 except:
     logger.log("Something wrong with the config. If you crash, delete it so we can regenerate it.", "error")
@@ -69,16 +73,46 @@ async def on_ready():
             if ch in sv.channels:
                 logger.log("\t\t[" + chid + "] #" + ch.name)
 
-
 @bot.event
 async def on_message(message):
     if message.author.id != bot.user.id and message.content != "" and len(message.attachments) == 0 and message.channel.id in channelsToWatch:
-
-        subreddit.submit(title=message.content,selftext="This message has been automatically submitted.")
-        logger.log("Submitted reddit self-post on /r/" + redditSub +": \"" + message.content + "\"")
-    elif message.author.id != bot.user.id and message.content == "" and len(message.attachments) > 0 and message.channel.id in channelsToWatch:
-        subreddit.submit(title=message.author.name + " at " + time.strftime('%H:%M %d %b'),url=message.attachments[0]["url"])
-        logger.log("Submitted reddit link-post on /r/" + redditSub + ": \"" + message.author.name + " at " + time.strftime('%H:%M %d %b') + "\", " + message.attachments[0]["url"])
+        autoStr = "This post has been automatically submitted"
+        if len(message.content) > 32:
+            msgTitle = message.author.name + ": " + message.content[:32] + "..."
+        else:
+            msgTitle = message.author.name + ": " + message.content
+        if tagTitles in ["true", "True", "1", "yes", "Yes"]:
+            uniqueTag = " (" + secrets.token_hex(4) + ")"
+        else:
+            uniqueTag = ""
+        if detailedSrc in ["true", "True", "1", "yes", "Yes"]:
+            src = " from the Discord server " + message.channel.server.name + ", channel #" + message.channel.name + ", author " + message.author.name + ", by the bot " + bot.user.name
+        else:
+            src = ""
+        if promote in ["true", "True", "1", "yes", "Yes"]:
+            promotion = ". This bot is based on DiscordRedditSubmitter, developed by /u/WoophRadu. [GitHub](https://github.com/WoophRadu/DiscordRedditSubmitter)"
+        else:
+            promotion = "."
+        postContent = message.content + "\n\n" + autoStr + src + promotion
+        postTitle = msgTitle + uniqueTag
+        subreddit.submit(title=postTitle,selftext=postContent)
+        logger.log("Submitted reddit self-post on /r/" + redditSub +": \"" + postTitle + "\"")
+    elif message.author.id != bot.user.id and len(message.attachments) > 0 and message.channel.id in channelsToWatch:
+        if message.content == "":
+            linkDesc = ""
+        else:
+            linkDesc = ": " + message.content
+        if tagTitles in ["true", "True", "1", "yes", "Yes"]:
+            uniqueTag = " (" + secrets.token_hex(4) + ")"
+        else:
+            uniqueTag = ""
+        if detailedSrc in ["true", "True", "1", "yes", "Yes"]:
+            msgTitle = message.author.name + " in #" + message.channel.name + linkDesc
+        else:
+            msgTitle = message.author.name + " on Discord"
+        postTitle = msgTitle + uniqueTag
+        subreddit.submit(title=postTitle,url=message.attachments[0]["url"])
+        logger.log("Submitted reddit link-post on /r/" + redditSub + ": \"" + postTitle + "\", " + message.attachments[0]["url"])
 
 if token == "YourToken":
     logger.log("Bot login token is invalid. You need to go into config.ini and change the token under Login to your bot's token. Exiting in 5 seconds.", "critical")
