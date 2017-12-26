@@ -48,6 +48,7 @@ except:
     logger.log("Something wrong with the config. If you crash, delete it so we can regenerate it.", "error")
 
 logging.Logger.setLevel(logging.getLogger(),loglevel)
+logger.setlevel(loglevel)
 
 if not (redditUser == "YourUsername" or redditPassword == "YourPassword" or redditID == "YourID" or redditSecret == "YourSecret" or redditSub == "example"):
     reddit = praw.Reddit(client_id=redditID,client_secret=redditSecret,password=redditPassword,username=redditUser,user_agent='DiscordRedditSubmitter (coded by u/WoophRadu, src at github.com/WoophRadu/DiscordRedditSubmitter)')
