@@ -38,23 +38,27 @@ try:
     redditPassword = config["RedditLogin"]["password"]
     redditID = config["RedditLogin"]["client_id"]
     redditSecret = config["RedditLogin"]["client_secret"]
-    redditSub = config["AutoSubmit"]["subreddit"]
-    channelsToWatch = config["AutoSubmit"]["channel_ids"].split()
     promote = config["AutoSubmit"]["promote"]
     detailedSrc = config["AutoSubmit"]["detailed_src"]
     tagTitles = config["AutoSubmit"]["unique_titles"]
     botCommandPrefix = config["Options"]["command_prefix"]
+    channelToSubreddit = dict()
+    for section in config.sections():
+        if section[:9] == "Subreddit":
+            channels = config[section]["channel_ids"].split()
+            subreddit = config[section]["subreddit"]
+            for channel in channels:
+                channelToSubreddit[channel] = subreddit
 except:
     logger.log("Something wrong with the config. If you crash, delete it so we can regenerate it.", "error")
 
 logging.Logger.setLevel(logging.getLogger(), loglevel)
 logger.setlevel(loglevel)
 
-if not (redditUser == "YourUsername" or redditPassword == "YourPassword" or redditID == "YourID" or redditSecret == "YourSecret" or redditSub == "example"):
+if not (redditUser == "YourUsername" or redditPassword == "YourPassword" or redditID == "YourID" or redditSecret == "YourSecret"):
     reddit = praw.Reddit(client_id=redditID, client_secret=redditSecret, password=redditPassword, username=redditUser, user_agent='DiscordRedditSubmitter (coded by u/WoophRadu, src at github.com/WoophRadu/DiscordRedditSubmitter)')
     reddit.validate_on_submit = True
-    subreddit = reddit.subreddit(redditSub)
-    logger.log("Logged into reddit as /u/" + redditUser + " and bound to subreddit /r/" + redditSub)
+    logger.log("Logged into reddit as /u/" + redditUser)
 else:
     logger.log("Some settings are default in config.ini , you need to change them in order to get the all the functionality working. Exiting in 5 seconds.", "critical")
     time.sleep(5)
@@ -70,14 +74,14 @@ async def on_ready():
     logger.log('Logged in as ' + bot.user.name + ' with ID [' + str(bot.user.id) + '] on:')
     for sv in bot.guilds:
         logger.log('\t[' + str(sv.id) + '] ' + str(sv.name) + ", bound to channels:")
-        for chid in channelsToWatch:
+        for chid in channelToSubreddit.keys():
             ch = bot.get_channel(int(chid))
             if ch in sv.channels:
-                logger.log("\t\t[" + chid + "] #" + ch.name)
+                logger.log("\t\t[" + chid + "] #" + ch.name + " -> /r/" + channelToSubreddit[chid])
 
 @bot.listen()
 async def on_message(message):
-    if message.author.id != bot.user.id and message.content != "" and len(message.attachments) == 0 and str(message.channel.id) in channelsToWatch:
+    if message.author.id != bot.user.id and message.content != "" and len(message.attachments) == 0 and str(message.channel.id) in channelToSubreddit.keys():
         autoStr = "This post has been automatically submitted"
         if len(message.content) > 32:
             msgTitle = message.author.name + ": " + message.content[:32] + "..."
@@ -97,9 +101,10 @@ async def on_message(message):
             promotion = "."
         postContent = message.content + "\n\n" + autoStr + src + promotion
         postTitle = msgTitle + uniqueTag
-        subreddit.submit(title=postTitle, selftext=postContent)
-        logger.log("Submitted reddit self-post on /r/" + redditSub +": \"" + postTitle + "\"")
-    elif message.author.id != bot.user.id and len(message.attachments) > 0 and message.channel.id in channelsToWatch:
+        sub = reddit.subreddit(channelToSubreddit[str(message.channel.id)])
+        sub.submit(title=postTitle, selftext=postContent)
+        logger.log("Submitted reddit self-post on /r/" + channelToSubreddit[str(message.channel.id)] +": \"" + postTitle + "\"")
+    elif message.author.id != bot.user.id and len(message.attachments) > 0 and str(message.channel.id) in channelToSubreddit.keys():
         if message.content == "":
             linkDesc = ""
         else:
@@ -113,8 +118,9 @@ async def on_message(message):
         else:
             msgTitle = message.author.name + " on Discord"
         postTitle = msgTitle + uniqueTag
-        subreddit.submit(title=postTitle, url=message.attachments[0]["url"])
-        logger.log("Submitted reddit link-post on /r/" + redditSub + ": \"" + postTitle + "\", " + message.attachments[0]["url"])
+        sub = reddit.subreddit(channelToSubreddit[str(message.channel.id)])
+        sub.submit(title=postTitle, url=message.attachments[0].url)
+        logger.log("Submitted reddit link-post on /r/" + channelToSubreddit[str(message.channel.id)] + ": \"" + postTitle + "\", " + message.attachments[0].url)
 
 if token == "YourToken":
     logger.log("Bot login token is invalid. You need to go into config.ini and change the token under Login to your bot's token. Exiting in 5 seconds.", "critical")
