@@ -66,17 +66,17 @@ bot = commands.Bot(command_prefix=botCommandPrefix, description=description)
 async def on_ready():
     logger.log("on_ready fired. You are in debug mode.", "debug")
     logger.log("Bot initialized. Logging in...")
-    logger.log('Logged in as ' + bot.user.name + ' with ID [' + bot.user.id + '] on:')
-    for sv in bot.servers:
+    logger.log('Logged in as ' + bot.user.name + ' with ID [' + str(bot.user.id) + '] on:')
+    for sv in bot.guilds:
         logger.log('\t[' + str(sv.id) + '] ' + str(sv.name) + ", bound to channels:")
         for chid in channelsToWatch:
-            ch = bot.get_channel(chid)
+            ch = bot.get_channel(int(chid))
             if ch in sv.channels:
                 logger.log("\t\t[" + chid + "] #" + ch.name)
 
-@bot.event
+@bot.listen()
 async def on_message(message):
-    if message.author.id != bot.user.id and message.content != "" and len(message.attachments) == 0 and message.channel.id in channelsToWatch:
+    if message.author.id != bot.user.id and message.content != "" and len(message.attachments) == 0 and str(message.channel.id) in channelsToWatch:
         autoStr = "This post has been automatically submitted"
         if len(message.content) > 32:
             msgTitle = message.author.name + ": " + message.content[:32] + "..."
@@ -87,7 +87,7 @@ async def on_message(message):
         else:
             uniqueTag = ""
         if detailedSrc in ["true", "True", "1", "yes", "Yes"]:
-            src = " from the Discord server " + message.channel.server.name + ", channel #" + message.channel.name + ", author " + message.author.name + ", by the bot " + bot.user.name
+            src = " from the Discord server " + message.channel.guild.name + ", channel #" + message.channel.name + ", author " + message.author.name + ", by the bot " + bot.user.name
         else:
             src = ""
         if promote in ["true", "True", "1", "yes", "Yes"]:
