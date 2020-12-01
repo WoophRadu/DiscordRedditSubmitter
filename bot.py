@@ -129,7 +129,8 @@ if token == "YourToken":
 else:
     try:
         bot.run(token)
-    except:
-        logger.log("There was an error while connecting the bot to Discord.\nEither your login token is invalid, or idk. Exiting in 5 seconds.", "critical")
+    except Exception as e:
+        logger.log("There was an error while connecting the bot to Discord. Either your login token is invalid, or idk. Exiting in 5 seconds.", "critical")
+        logger.log("Exception passed: " + str(e.__class__) + ' ' + str(e), "critical")
         time.sleep(5)
         sys.exit(1)
