@@ -47,13 +47,14 @@ try:
 except:
     logger.log("Something wrong with the config. If you crash, delete it so we can regenerate it.", "error")
 
-logging.Logger.setLevel(logging.getLogger(),loglevel)
+logging.Logger.setLevel(logging.getLogger(), loglevel)
 logger.setlevel(loglevel)
 
 if not (redditUser == "YourUsername" or redditPassword == "YourPassword" or redditID == "YourID" or redditSecret == "YourSecret" or redditSub == "example"):
-    reddit = praw.Reddit(client_id=redditID,client_secret=redditSecret,password=redditPassword,username=redditUser,user_agent='DiscordRedditSubmitter (coded by u/WoophRadu, src at github.com/WoophRadu/DiscordRedditSubmitter)')
+    reddit = praw.Reddit(client_id=redditID, client_secret=redditSecret, password=redditPassword, username=redditUser, user_agent='DiscordRedditSubmitter (coded by u/WoophRadu, src at github.com/WoophRadu/DiscordRedditSubmitter)')
+    reddit.validate_on_submit = True
     subreddit = reddit.subreddit(redditSub)
-    logger.log("Logged into reddit as /u/" + redditUser +" and bound to subreddit /r/" + redditSub)
+    logger.log("Logged into reddit as /u/" + redditUser + " and bound to subreddit /r/" + redditSub)
 else:
     logger.log("Some settings are default in config.ini , you need to change them in order to get the all the functionality working. Exiting in 5 seconds.", "critical")
     time.sleep(5)
@@ -96,7 +97,7 @@ async def on_message(message):
             promotion = "."
         postContent = message.content + "\n\n" + autoStr + src + promotion
         postTitle = msgTitle + uniqueTag
-        subreddit.submit(title=postTitle,selftext=postContent)
+        subreddit.submit(title=postTitle, selftext=postContent)
         logger.log("Submitted reddit self-post on /r/" + redditSub +": \"" + postTitle + "\"")
     elif message.author.id != bot.user.id and len(message.attachments) > 0 and message.channel.id in channelsToWatch:
         if message.content == "":
@@ -112,7 +113,7 @@ async def on_message(message):
         else:
             msgTitle = message.author.name + " on Discord"
         postTitle = msgTitle + uniqueTag
-        subreddit.submit(title=postTitle,url=message.attachments[0]["url"])
+        subreddit.submit(title=postTitle, url=message.attachments[0]["url"])
         logger.log("Submitted reddit link-post on /r/" + redditSub + ": \"" + postTitle + "\", " + message.attachments[0]["url"])
 
 if token == "YourToken":
